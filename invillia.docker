@@ -1,0 +1,40 @@
+FROM maven:3.6.0-jdk-8-alpine
+
+# Defining maintainer label
+
+LABEL maintainer="roberto.jrnj@gmail.com"
+
+# Defining useful arguments
+
+ARG TEMP_DIRECTORY=/tmp
+ARG PROJECT_NAME=invillia/backend-challenge
+ARG PROJECT_TEMP_DIRECTORY=${TEMP_DIRECTORY}/${PROJECT_NAME}
+ARG PROJECT_DEPENDENCY=${PROJECT_TEMP_DIRECTORY}/target/dependency
+
+# Create container volume
+
+VOLUME ${TEMP_DIRECTORY}
+
+# Create destiny temp directory
+
+RUN mkdir -p ${PROJECT_TEMP_DIRECTORY}
+
+# Copy project files
+
+COPY . ${PROJECT_TEMP_DIRECTORY}
+
+# Build project
+
+RUN mvn -f ${PROJECT_TEMP_DIRECTORY} clean package
+
+# Create the project destination folder
+
+RUN mkdir -p /app
+
+# Copy files after build to the project destination folder
+
+RUN cp -a ${PROJECT_DEPENDENCY}/BOOT-INF/lib /app/lib \
+    && cp -a ${PROJECT_DEPENDENCY}/META-INF /app/META-INF \
+    && cp -a ${PROJECT_DEPENDENCY}/BOOT-INF/classes/. /app
+
+ENTRYPOINT ["java","-cp", "app:app/lib/*","com.invillia.acme.InvilliaApplication"]
